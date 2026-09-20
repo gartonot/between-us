@@ -3,17 +3,22 @@ const normalize = value => value.normalize('NFKC').trim().toLocaleLowerCase('ru'
 const entryCode = normalize;
 const bytes = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
 const storageKey = 'between-us-quest-v2';
-const stages = ['welcome', 'intro', 'joke', 'joke-result', 'dudka', 'dudka-result', 'park', 'park-result', 'champion-intro', 'clues', 'champion', 'champion-result', 'wait'];
+const stages = ['welcome', 'intro', 'joke', 'joke-result', 'dudka', 'dudka-result', 'park', 'park-result', 'uno-find', 'uno', 'number', 'uno-result', 'champion-intro', 'clues', 'champion', 'champion-result', 'wait'];
 let content, decryptionKey, audioUrl, player, sceneController, revealTimer, active = false;
 let audioLoad, savedAvailable = true;
-let progress = { stage: 'welcome', heard: false, shield: false, firstGuess: false, office: false, jokeDone: false, dudkaDone: false, parkDone: false, leonaDone: false };
+let progress = { stage: 'welcome', heard: false, shield: false, firstGuess: false, office: false, jokeDone: false, dudkaDone: false, parkDone: false, unoDone: false, leonaDone: false };
 try {
   const saved = JSON.parse(localStorage.getItem(storageKey));
   if (saved && stages.includes(saved.stage)) {
     progress.stage = saved.stage;
-    for (const key of ['heard', 'shield', 'firstGuess', 'office', 'jokeDone', 'dudkaDone', 'parkDone', 'leonaDone']) progress[key] = saved[key] === true;
+    if (stages.includes(saved.returnAfterUno)) progress.returnAfterUno = saved.returnAfterUno;
+    for (const key of ['heard', 'shield', 'firstGuess', 'office', 'jokeDone', 'dudkaDone', 'parkDone', 'unoDone', 'leonaDone']) progress[key] = saved[key] === true;
   }
 } catch { savedAvailable = false; }
+if (!progress.unoDone && stages.indexOf(progress.stage) >= stages.indexOf('champion-intro')) {
+  progress.returnAfterUno = progress.stage;
+  progress.stage = 'uno-find';
+}
 function save() {
   try { localStorage.setItem(storageKey, JSON.stringify(progress)); }
   catch { savedAvailable = false; }
@@ -25,8 +30,8 @@ function listen(selector, event, handler) {
   if (element) element.addEventListener(event, handler, { signal: sceneController.signal });
 }
 function stars() {
-  const names = ['Твой смех', 'Одна мысль', 'Та самая пауза', 'Наше солнце', 'Вместе'];
-  const states = [progress.jokeDone, progress.dudkaDone, progress.parkDone, progress.leonaDone, false];
+  const names = ['Твой смех', 'Одна мысль', 'Та самая пауза', 'Твой ход', 'Наше солнце', 'Вместе'];
+  const states = [progress.jokeDone, progress.dudkaDone, progress.parkDone, progress.unoDone, progress.leonaDone, false];
   $('.star-track').innerHTML = names.map((name, i) => `<li class="${states[i] ? 'lit' : ''}"><span aria-hidden="true">✦</span><span>${name}</span><span class="sr-only">${states[i] ? ' — зажжена' : ' — ещё впереди'}</span></li>`).join('');
 }
 function frame(eyebrow, title, body) {
@@ -121,7 +126,19 @@ function render() {
     checkAnswer('park', () => { progress.parkDone = true; go('park-result'); });
   } else if (stage === 'park-result') {
     frame('ЕЩЁ ОДНА ЗВЕЗДА', 'Можно и не договаривать.', '<p class="scene-copy">Всё равно нам обоим смешно.</p><div class="earned-star" aria-hidden="true">✦</div>'+button('next', 'Дальше'));
-    listen('#next', 'click', () => go('champion-intro'));
+    listen('#next', 'click', () => go('uno-find'));
+  } else if (stage === 'uno-find') {
+    frame('ПРОДОЛЖЕНИЕ МЕЖДУ СТРАНИЦ', 'Твой ход.', '<p class="scene-copy">В одной подаренной мной истории есть вещи,<br>которые совсем не похожи на закладки.<br><br>Найди их. Сегодня твой ход.</p><p class="office-note">Понадобятся книга и карточки, которые я тебе подарил. Если их сейчас нет рядом, можно вернуться позже.</p>'+button('found', 'Нашла'));
+    listen('#found', 'click', () => go('uno'));
+  } else if (stage === 'uno') {
+    frame('СЕГОДНЯ ПРАВИЛА НЕМНОГО НАШИ', 'Разложи перед собой.', '<p class="scene-copy">Солнце → огонь → все цвета → смена направления.</p><p class="scene-copy small-copy">Первые две карты — начало твоего кода.<br>Третья говорит, сколько к нему прибавить.<br>Последняя — с какой стороны прочитать результат.</p>'+answerForm('Твой ход', 'Какое число получилось?')+'<details><summary>Первая подсказка</summary><p>Первые две карты образуют одно двузначное число.</p><details><summary>Ещё подсказка</summary><p>Карта +4 здесь работает буквально: прибавь четыре.</p><details><summary>А что делает последняя?</summary><p>Карта возврата меняет порядок цифр в результате.</p></details></details></details>');
+    checkAnswer('uno', () => go('number'));
+  } else if (stage === 'number') {
+    frame('МЫ УЖЕ ИГРАЛИ В ЧИСЛА', 'Чего-то не хватает.', '<p class="scene-copy">Всё правильно. Но кое-чего не хватает.<br><br>Мы уже играли с тобой в числа.<br>От одного до двух тысяч — помнишь, как долго ты искала то самое?</p><form id="answer-form" class="answer-form"><label for="answer">Вспомни последнюю цифру</label><div class="number-code"><span aria-hidden="true">64</span><input id="answer" aria-label="Последняя цифра числа 64_" aria-describedby="answer-feedback" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" placeholder="_" autocomplete="off" required></div><button class="primary" type="submit">Это оно</button><p id="answer-feedback" class="feedback" role="status"></p></form>');
+    checkAnswer('number', () => { progress.unoDone = true; go('uno-result'); });
+  } else if (stage === 'uno-result') {
+    frame('ТО САМОЕ ЧИСЛО', '640.', '<p class="scene-copy">В этот раз я хотя бы оставил подсказки.</p><div class="earned-star" aria-hidden="true">✦</div>'+button('next', 'Дальше'));
+    listen('#next', 'click', () => { const next = progress.returnAfterUno || 'champion-intro'; delete progress.returnAfterUno; go(next); });
   } else if (stage === 'champion-intro') {
     frame('НАШЕ ОБЫЧНОЕ ДЕЛО', 'Кто же это?', '<p class="scene-copy">Ну что, ещё одну?<br>В этот раз действительно одну.</p>'+button('next', 'Угуууу'));
     listen('#next', 'click', () => go('clues'));
