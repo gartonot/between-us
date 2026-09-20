@@ -30,7 +30,7 @@ function listen(selector, event, handler) {
   if (element) element.addEventListener(event, handler, { signal: sceneController.signal });
 }
 function stars() {
-  const names = ['Твой смех', 'Одна мысль', 'Та самая пауза', 'Твой ход', 'Наше солнце', 'Вместе'];
+  const names = ['Твой смех', 'Одна мысль', 'Та самая пауза', 'Твой ход', 'Эмоджинариум', 'Вместе'];
   const states = [progress.jokeDone, progress.dudkaDone, progress.parkDone, progress.unoDone, progress.leonaDone, false];
   $('.star-track').innerHTML = names.map((name, i) => `<li class="${states[i] ? 'lit' : ''}"><span aria-hidden="true">✦</span><span>${name}</span><span class="sr-only">${states[i] ? ' — зажжена' : ' — ещё впереди'}</span></li>`).join('');
 }
@@ -165,7 +165,7 @@ function render() {
     frame('ВСЕ ЗНАКИ У ТЕБЯ', 'Кто же это?', '<div class="clue-grid complete-clues"><div><span>👩</span><p>От меня</p></div><div><span>⚔️</span><p>Со стола</p></div><div><span>☀️</span><p>С неба</p></div></div><p class="scene-copy">Теперь у тебя есть всё.<br>Кого мы загадали?</p>'+answerForm('Имя чемпиона', 'На русском или английском', 'Это точно…')+'<details><summary>Ещё маленькая подсказка</summary><p>Воительница. Клинок. Солнце. Рассвет на твоей стороне.</p></details>');
     checkAnswer('champion', () => { progress.leonaDone = true; go('champion-result'); });
   } else if (stage === 'champion-result') {
-    frame('НАШЕ СОЛНЦЕ', 'Угуууу.', '<p class="scene-copy">Солнце нашли.<br>Зажигаем ещё одну звезду.</p><div class="earned-star sun-star" aria-hidden="true">☀</div>'+button('next', 'А дальше?'));
+    frame('ЭМОДЖИНАРИУМ', 'Угуууу.', '<p class="scene-copy">Солнце нашли.<br>Зажигаем ещё одну звезду.</p><div class="earned-star sun-star" aria-hidden="true">☀</div>'+button('next', 'А дальше?'));
     listen('#next', 'click', () => go('wait'));
   } else {
     frame('ПРОДОЛЖЕНИЕ — ВО ВТОРНИК', 'Одну оставим<br>для нас.', '<div class="final-orbit" aria-hidden="true">✧</div><p id="ending" class="scene-copy"></p><p class="quiet-note">Остальные подробности я расскажу тебе сам.</p>');
