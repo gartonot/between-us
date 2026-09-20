@@ -6,12 +6,12 @@ const storageKey = 'between-us-quest-v2';
 const stages = ['welcome', 'intro', 'joke', 'joke-result', 'dudka', 'dudka-result', 'park', 'park-result', 'champion-intro', 'clues', 'champion', 'champion-result', 'wait'];
 let content, decryptionKey, audioUrl, player, sceneController, revealTimer, active = false;
 let audioLoad, savedAvailable = true;
-let progress = { stage: 'welcome', heard: false, shield: false, office: false, jokeDone: false, dudkaDone: false, parkDone: false, leonaDone: false };
+let progress = { stage: 'welcome', heard: false, shield: false, firstGuess: false, office: false, jokeDone: false, dudkaDone: false, parkDone: false, leonaDone: false };
 try {
   const saved = JSON.parse(localStorage.getItem(storageKey));
   if (saved && stages.includes(saved.stage)) {
     progress.stage = saved.stage;
-    for (const key of ['heard', 'shield', 'office', 'jokeDone', 'dudkaDone', 'parkDone', 'leonaDone']) progress[key] = saved[key] === true;
+    for (const key of ['heard', 'shield', 'firstGuess', 'office', 'jokeDone', 'dudkaDone', 'parkDone', 'leonaDone']) progress[key] = saved[key] === true;
   }
 } catch { savedAvailable = false; }
 function save() {
@@ -126,18 +126,26 @@ function render() {
     frame('НАШЕ ОБЫЧНОЕ ДЕЛО', 'Кто же это?', '<p class="scene-copy">Ну что, ещё одну?<br>В этот раз действительно одну.</p>'+button('next', 'Угуууу'));
     listen('#next', 'click', () => go('clues'));
   } else if (stage === 'clues') {
-    frame('ТРИ ЗНАКА · ОДИН ЧЕМПИОН', 'Кто же это?', `<p class="scene-copy small-copy">Один знак — у меня.<br>Второй ждёт тебя среди рабочего дня.<br>Третий появится, когда найдёшь остальные.</p><div class="clue-grid"><div><span aria-hidden="true">${progress.shield ? '✦' : '01'}</span><p>${progress.shield ? 'В переписке' : 'От меня'}</p></div><div><span aria-hidden="true">${progress.office ? '⚔️' : '02'}</span><p>На твоём столе</p></div><div><span aria-hidden="true">${progress.office && progress.shield ? '☀️' : '03'}</span><p>На сайте</p></div></div><div id="clue-task"></div>`);
+    frame('ТРИ ЗНАКА · ОДИН ЧЕМПИОН', 'Кто же это?', `<p class="scene-copy small-copy">Один знак — у меня.<br>Второй ждёт тебя среди рабочего дня.<br>Третий появится, когда найдёшь остальные.</p><div class="clue-grid"><div><span aria-hidden="true">${progress.shield ? '👩' : '01'}</span><p>${progress.shield ? 'Первый знак' : 'От меня'}</p></div><div><span aria-hidden="true">${progress.office ? '⚔️' : '02'}</span><p>${progress.firstGuess || progress.office ? 'На твоём столе' : 'Второй знак'}</p></div><div><span aria-hidden="true">${progress.office && progress.shield ? '☀️' : '03'}</span><p>На сайте</p></div></div><div id="clue-task"></div>`);
     if (!progress.shield) {
       $('#clue-task').innerHTML = button('ask', 'Ну дай подсказку')+'<div id="message-task" hidden><p class="scene-copy">Напиши мне: «Ну хочешь, я покажу».<br>Посмотрим, что я тебе отвечу.</p>'+button('received', 'Эмоджи у меня', true)+'</div>';
       listen('#ask', 'click', () => { $('#ask').hidden = true; $('#message-task').hidden = false; });
       listen('#received', 'click', () => { progress.shield = true; save(); render(); });
+    } else if (!progress.firstGuess && !progress.office) {
+      $('#clue-task').innerHTML = '<p class="scene-copy">Пока только один знак. Есть первая версия?</p><p class="office-note">Это пока догадка. Проверим её, когда соберёшь все три знака.</p>'+answerForm('Твоя первая версия', 'Кто это может быть?', 'Предположить');
+      listen('#answer-form', 'submit', event => {
+        event.preventDefault();
+        if (!normalize($('#answer').value)) { $('#answer-feedback').textContent = 'Напиши свою версию.'; return; }
+        progress.firstGuess = true;
+        save(); render();
+      });
     } else if (!progress.office) {
-      $('#clue-task').innerHTML = '<p class="scene-copy small-copy" id="office-copy"></p><p class="office-note">Если ты сейчас не в офисе, возвращайся сюда в понедельник. Я сохраню твоё место.</p>'+answerForm('Слово с найденного листка', 'Твой ответ', 'Открыть третий знак');
+      $('#clue-task').innerHTML = '<p class="scene-copy small-copy">Одного знака маловато. Прежде чем пробовать ещё, найди второй.</p><p class="scene-copy small-copy" id="office-copy"></p><p class="office-note">Если ты сейчас не в офисе, возвращайся сюда в понедельник. Я сохраню твоё место.</p>'+answerForm('Слово с найденного листка', 'Твой ответ', 'Открыть третий знак');
       $('#office-copy').textContent = content.office;
       checkAnswer('office', () => { progress.office = true; go('champion'); });
     } else go('champion');
   } else if (stage === 'champion') {
-    frame('ВСЕ ЗНАКИ У ТЕБЯ', 'Кто же это?', '<div class="clue-grid complete-clues"><div><span>🛡️</span><p>От меня</p></div><div><span>⚔️</span><p>Со стола</p></div><div><span>☀️</span><p>С неба</p></div></div><p class="scene-copy">Теперь у тебя есть всё.<br>Кого мы загадали?</p>'+answerForm('Имя чемпиона', 'На русском или английском', 'Это точно…')+'<details><summary>Ещё маленькая подсказка</summary><p>Щит. Клинок. Солнце. Рассвет на твоей стороне.</p></details>');
+    frame('ВСЕ ЗНАКИ У ТЕБЯ', 'Кто же это?', '<div class="clue-grid complete-clues"><div><span>👩</span><p>От меня</p></div><div><span>⚔️</span><p>Со стола</p></div><div><span>☀️</span><p>С неба</p></div></div><p class="scene-copy">Теперь у тебя есть всё.<br>Кого мы загадали?</p>'+answerForm('Имя чемпиона', 'На русском или английском', 'Это точно…')+'<details><summary>Ещё маленькая подсказка</summary><p>Воительница. Клинок. Солнце. Рассвет на твоей стороне.</p></details>');
     checkAnswer('champion', () => { progress.leonaDone = true; go('champion-result'); });
   } else if (stage === 'champion-result') {
     frame('НАШЕ СОЛНЦЕ', 'Угуууу.', '<p class="scene-copy">Солнце нашли.<br>Зажигаем ещё одну звезду.</p><div class="earned-star sun-star" aria-hidden="true">☀</div>'+button('next', 'А дальше?'));
