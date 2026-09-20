@@ -1,0 +1,17 @@
+import { webcrypto } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
+import { createInterface } from 'node:readline/promises';
+const prompt = createInterface({input:process.stdin,output:process.stdout});
+const code = (await prompt.question('Секретное слово (ввод виден): ')).trim().toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/\s+/g,' ');
+prompt.close();
+if (!code) throw new Error('Код не может быть пустым');
+const content = JSON.parse(await readFile(new URL('../private/story.json',import.meta.url),'utf8'));
+const salt = webcrypto.getRandomValues(new Uint8Array(16));
+const iv = webcrypto.getRandomValues(new Uint8Array(12));
+const iterations = 310000;
+const material = await webcrypto.subtle.importKey('raw',new TextEncoder().encode(code),'PBKDF2',false,['deriveKey']);
+const key = await webcrypto.subtle.deriveKey({name:'PBKDF2',salt,iterations,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt']);
+const data = await webcrypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(content)));
+const base64 = value => Buffer.from(value).toString('base64');
+await writeFile(new URL('../dist/sealed.json',import.meta.url),JSON.stringify({salt:base64(salt),iv:base64(iv),iterations,data:base64(data)}));
+console.log('История зашифрована. Код не сохранён.');

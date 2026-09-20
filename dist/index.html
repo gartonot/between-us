@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#10191b">
+  <meta name="description" content="Одна маленькая история. Только для тебя.">
+  <title>Я оставил тебе знаки</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2310191b'/%3E%3Cpath d='M16 4L19 13L28 16L19 19L16 28L13 19L4 16L13 13Z' fill='%23dbfa92'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+  <script src="./sky.js" defer></script>
+</head>
+<body>
+  <canvas id="constellations" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <header><a class="wordmark" href="./" aria-label="В начало">между нами <span>✳</span></a><span class="edition">ЛИЧНАЯ ИСТОРИЯ / 01</span></header>
+  <main>
+    <section class="intro" aria-labelledby="title">
+      <p class="eyebrow"><span></span> В НАШЕЙ МАЛЕНЬКОЙ ВСЕЛЕННОЙ</p>
+      <h1 id="title">У каждой звезды<br>есть <em>секрет.</em></h1>
+      <p class="lead">Одни хранятся в наших воспоминаниях.<br> Другие ждут там, где проходит твой день.<br> А некоторые — в местах, где мы бываем вместе.</p>
+      <p class="aside">Всё начинается с одного слова.</p>
+    </section>
+    <section class="entry" aria-labelledby="entry-title">
+      <div class="card-top"><span>НАЧАЛО ИСТОРИИ</span><span aria-hidden="true">↗</span></div>
+      <div id="locked">
+        <h2 id="entry-title">Ты знаешь ключ.</h2>
+        <p class="card-copy">Он не от двери. Он от чего-то нашего.<br>Когда найдёшь его — возвращайся сюда.</p>
+        <form id="unlock-form">
+          <label for="code">Твоё секретное слово</label>
+          <div class="input-wrap"><input id="code" name="code" type="password" placeholder="Введи ответ" autocomplete="off" spellcheck="false" required maxlength="120" aria-describedby="feedback"><button id="toggle" type="button" aria-label="Показать слово" aria-pressed="false">Показать</button></div>
+          <button class="primary" id="submit" type="submit">Открыть историю <span aria-hidden="true">↗</span></button>
+          <p id="feedback" role="status" aria-live="polite"></p>
+        </form>
+        <details><summary>Маленькая подсказка</summary><p>Первая подсказка придёт от меня. Не нужно угадывать наугад — ты поймёшь, когда её увидишь.</p></details>
+      </div>
+      <div id="unlocked" hidden tabindex="-1"><span class="success-mark" aria-hidden="true">✳</span><h2 id="secret-title"></h2><p class="card-copy" id="secret-body"></p><button class="back" id="lock" type="button">Закрыть историю</button></div>
+      <div class="card-bottom"><span>ТОЛЬКО ТЫ ЗНАЕШЬ, ГДЕ ИСКАТЬ</span><span>01 — …</span></div>
+    </section>
+  </main>
+  <footer><span>У обычных мест есть наши секреты.</span><span class="footer-note">Продолжение — за пределами экрана <span aria-hidden="true">↗</span></span></footer>
+</body>
+</html>
