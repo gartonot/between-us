@@ -145,9 +145,18 @@ function render() {
   } else if (stage === 'clues') {
     frame('ТРИ ЗНАКА · ОДИН ЧЕМПИОН', 'Кто же это?', `<p class="scene-copy small-copy">Один знак — у меня.<br>Второй ждёт тебя среди рабочего дня.<br>Третий появится, когда найдёшь остальные.</p><div class="clue-grid"><div><span aria-hidden="true">${progress.shield ? '👩' : '01'}</span><p>${progress.shield ? 'Первый знак' : 'От меня'}</p></div><div><span aria-hidden="true">${progress.office ? '⚔️' : '02'}</span><p>${progress.firstGuess || progress.office ? 'На твоём столе' : 'Второй знак'}</p></div><div><span aria-hidden="true">${progress.office && progress.shield ? '☀️' : '03'}</span><p>На сайте</p></div></div><div id="clue-task"></div>`);
     if (!progress.shield) {
-      $('#clue-task').innerHTML = button('ask', 'Ну дай подсказку')+'<div id="message-task" hidden><p class="scene-copy">Напиши мне: «Ну хочешь, я покажу».<br>Посмотрим, что я тебе отвечу.</p>'+button('received', 'Эмоджи у меня', true)+'</div>';
-      listen('#ask', 'click', () => { $('#ask').hidden = true; $('#message-task').hidden = false; });
-      listen('#received', 'click', () => { progress.shield = true; save(); render(); });
+      $('#clue-task').innerHTML = button('ask', 'Ну дай подсказку')+'<div id="message-task" hidden><p class="scene-copy">Напиши мне: «Ну хочешь, я покажу».<br>Посмотрим, что я тебе отвечу.</p>'+answerForm('Вставь эмоджи из моего сообщения', 'Скопируй его из переписки', 'Добавить знак')+'</div>';
+      listen('#ask', 'click', () => { $('#ask').hidden = true; $('#message-task').hidden = false; $('#answer').focus(); });
+      listen('#answer-form', 'submit', event => {
+        event.preventDefault();
+        const emoji = $('#answer').value.trim().replace(/\uFE0F/g, '');
+        if (emoji !== '👩') {
+          $('#answer-feedback').textContent = 'Нужен именно эмоджи из моего сообщения. Скопируй и вставь его сюда.';
+          $('#answer').setAttribute('aria-invalid', 'true');
+          return;
+        }
+        progress.shield = true; save(); render();
+      });
     } else if (!progress.firstGuess && !progress.office) {
       $('#clue-task').innerHTML = '<p class="scene-copy">Пока только один знак. Есть первая версия?</p><p class="office-note">Это пока догадка. Проверим её, когда соберёшь все три знака.</p>'+answerForm('Твоя первая версия', 'Кто это может быть?', 'Предположить');
       listen('#answer-form', 'submit', event => {
