@@ -119,7 +119,7 @@ function render() {
     frame('ОДНА МЫСЛЬ НА ДВОИХ', 'Дудка?', '<p class="scene-copy">Иногда мне кажется, что у нас одна мысль на двоих.<br>И далеко не всегда умная.</p><form id="answer-form" class="answer-form inline-answer"><label for="answer">И мы с тобой как Дудка, блять, и…</label><input id="answer" class="answer-input" placeholder="…" autocomplete="off" spellcheck="false" maxlength="100" required aria-describedby="answer-feedback"><button class="primary" type="submit">Продолжить <span aria-hidden="true">↗</span></button><p id="answer-feedback" class="feedback" role="status"></p></form>');
     checkAnswer('dudka', () => { progress.dudkaDone = true; go('dudka-result'); });
   } else if (stage === 'dudka-result') {
-    frame('ВТОРАЯ ЗВЕЗДА', 'Дудка и трубник.', '<p class="scene-copy">Иногда мы думаем об одном и том же.<br>Почему-то иногда — об этом.</p><div class="earned-star" aria-hidden="true">✦</div>'+button('next', 'Дальше'));
+    frame('ВТОРАЯ ЗВЕЗДА', 'Дудка и трубник.', '<p class="scene-copy">Иногда мы думаем об одном и том же.<br>А иногда очень часто, мне приятно от этого, словно мы как две половинки одной жопы))</p><div class="earned-star" aria-hidden="true">✦</div>'+button('next', 'Дальше'));
     listen('#next', 'click', () => go('park'));
   } else if (stage === 'park') {
     frame('ТА САМАЯ ПАУЗА', 'А ты знаешь…', '<p class="scene-copy">А ты знаешь, что Линкин Парк…<br><br>раньше хотели назвать…</p>'+answerForm('Ты знаешь продолжение', 'Закончишь за меня?'));
