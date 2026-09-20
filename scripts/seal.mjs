@@ -4,7 +4,6 @@ import { createInterface } from 'node:readline/promises';
 const prompt = createInterface({input:process.stdin,output:process.stdout});
 let code = (await prompt.question('Секретное слово (ввод виден): ')).normalize('NFKC').trim().toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/\s+/g,' ');
 prompt.close();
-if (['линкольнпарк','lincolnpark'].includes(code.replace(/[\s-]/g,''))) code='lincolnpark';
 if (!code) throw new Error('Код не может быть пустым');
 const content = JSON.parse(await readFile(new URL('../private/story.json',import.meta.url),'utf8'));
 const salt = webcrypto.getRandomValues(new Uint8Array(16));

@@ -1,20 +1,17 @@
 const $ = selector => document.querySelector(selector);
 const normalize = value => value.normalize('NFKC').trim().toLocaleLowerCase('ru').replace(/ё/g, 'е').replace(/\s+/g, ' ');
-const entryCode = value => {
-  const cleaned = normalize(value).replace(/[\s-]/g, '');
-  return ['линкольнпарк', 'lincolnpark'].includes(cleaned) ? 'lincolnpark' : normalize(value);
-};
+const entryCode = normalize;
 const bytes = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
 const storageKey = 'between-us-quest-v2';
-const stages = ['welcome', 'intro', 'joke', 'joke-result', 'dudka', 'dudka-result', 'champion-intro', 'clues', 'champion', 'champion-result', 'wait'];
+const stages = ['welcome', 'intro', 'joke', 'joke-result', 'dudka', 'dudka-result', 'park', 'park-result', 'champion-intro', 'clues', 'champion', 'champion-result', 'wait'];
 let content, decryptionKey, audioUrl, player, sceneController, revealTimer, active = false;
 let audioLoad, savedAvailable = true;
-let progress = { stage: 'welcome', heard: false, shield: false, office: false, jokeDone: false, dudkaDone: false, leonaDone: false };
+let progress = { stage: 'welcome', heard: false, shield: false, office: false, jokeDone: false, dudkaDone: false, parkDone: false, leonaDone: false };
 try {
   const saved = JSON.parse(localStorage.getItem(storageKey));
   if (saved && stages.includes(saved.stage)) {
     progress.stage = saved.stage;
-    for (const key of ['heard', 'shield', 'office', 'jokeDone', 'dudkaDone', 'leonaDone']) progress[key] = saved[key] === true;
+    for (const key of ['heard', 'shield', 'office', 'jokeDone', 'dudkaDone', 'parkDone', 'leonaDone']) progress[key] = saved[key] === true;
   }
 } catch { savedAvailable = false; }
 function save() {
@@ -28,8 +25,8 @@ function listen(selector, event, handler) {
   if (element) element.addEventListener(event, handler, { signal: sceneController.signal });
 }
 function stars() {
-  const names = ['Твой смех', 'Одна мысль', 'Наше солнце', 'Вместе'];
-  const states = [progress.jokeDone, progress.dudkaDone, progress.leonaDone, false];
+  const names = ['Твой смех', 'Одна мысль', 'Та самая пауза', 'Наше солнце', 'Вместе'];
+  const states = [progress.jokeDone, progress.dudkaDone, progress.parkDone, progress.leonaDone, false];
   $('.star-track').innerHTML = names.map((name, i) => `<li class="${states[i] ? 'lit' : ''}"><span aria-hidden="true">✦</span><span>${name}</span><span class="sr-only">${states[i] ? ' — зажжена' : ' — ещё впереди'}</span></li>`).join('');
 }
 function frame(eyebrow, title, body) {
@@ -118,6 +115,12 @@ function render() {
     checkAnswer('dudka', () => { progress.dudkaDone = true; go('dudka-result'); });
   } else if (stage === 'dudka-result') {
     frame('ВТОРАЯ ЗВЕЗДА', 'Дудка и трубник.', '<p class="scene-copy">Иногда мы думаем об одном и том же.<br>Почему-то иногда — об этом.</p><div class="earned-star" aria-hidden="true">✦</div>'+button('next', 'Дальше'));
+    listen('#next', 'click', () => go('park'));
+  } else if (stage === 'park') {
+    frame('ТА САМАЯ ПАУЗА', 'А ты знаешь…', '<p class="scene-copy">А ты знаешь, что Линкин Парк…<br><br>раньше хотели назвать…</p>'+answerForm('Ты знаешь продолжение', 'Закончишь за меня?'));
+    checkAnswer('park', () => { progress.parkDone = true; go('park-result'); });
+  } else if (stage === 'park-result') {
+    frame('ЕЩЁ ОДНА ЗВЕЗДА', 'Можно и не договаривать.', '<p class="scene-copy">Всё равно нам обоим смешно.</p><div class="earned-star" aria-hidden="true">✦</div>'+button('next', 'Дальше'));
     listen('#next', 'click', () => go('champion-intro'));
   } else if (stage === 'champion-intro') {
     frame('НАШЕ ОБЫЧНОЕ ДЕЛО', 'Кто же это?', '<p class="scene-copy">Ну что, ещё одну?<br>В этот раз действительно одну.</p>'+button('next', 'Угуууу'));
@@ -137,18 +140,13 @@ function render() {
     frame('ВСЕ ЗНАКИ У ТЕБЯ', 'Кто же это?', '<div class="clue-grid complete-clues"><div><span>🛡️</span><p>От меня</p></div><div><span>⚔️</span><p>Со стола</p></div><div><span>☀️</span><p>С неба</p></div></div><p class="scene-copy">Теперь у тебя есть всё.<br>Кого мы загадали?</p>'+answerForm('Имя чемпиона', 'На русском или английском', 'Это точно…')+'<details><summary>Ещё маленькая подсказка</summary><p>Щит. Клинок. Солнце. Рассвет на твоей стороне.</p></details>');
     checkAnswer('champion', () => { progress.leonaDone = true; go('champion-result'); });
   } else if (stage === 'champion-result') {
-    frame('ТРЕТЬЯ ЗВЕЗДА', 'Угуууу.', '<p class="scene-copy">Солнце нашли.<br>Зажигаем ещё одну звезду.</p><div class="earned-star sun-star" aria-hidden="true">☀</div>'+button('next', 'А дальше?'));
+    frame('НАШЕ СОЛНЦЕ', 'Угуууу.', '<p class="scene-copy">Солнце нашли.<br>Зажигаем ещё одну звезду.</p><div class="earned-star sun-star" aria-hidden="true">☀</div>'+button('next', 'А дальше?'));
     listen('#next', 'click', () => go('wait'));
   } else {
     frame('ПРОДОЛЖЕНИЕ — ВО ВТОРНИК', 'Одну оставим<br>для нас.', '<div class="final-orbit" aria-hidden="true">✧</div><p id="ending" class="scene-copy"></p><p class="quiet-note">Остальные подробности я расскажу тебе сам.</p>');
     $('#ending').textContent = content.ending;
   }
 }
-$('#toggle').addEventListener('click', event => {
-  const visible = $('#code').type === 'password'; $('#code').type = visible ? 'text' : 'password';
-  event.currentTarget.textContent = visible ? 'Скрыть' : 'Показать';
-  event.currentTarget.setAttribute('aria-pressed', String(visible)); event.currentTarget.setAttribute('aria-label', visible ? 'Скрыть слово' : 'Показать слово');
-});
 $('#unlock-form').addEventListener('submit', async event => {
   event.preventDefault(); if (!entryCode($('#code').value)) return;
   $('#submit').disabled = true; $('#feedback').textContent = 'Проверяю ключ…';
